@@ -10,6 +10,7 @@ def init():
     c = conn.cursor()
     sql = '''
     CREATE TABLE IF NOT EXISTS expenses (
+        profile TEXT
         amount INTEGER,
         category TEXT,
         message TEXT,
@@ -20,23 +21,24 @@ def init():
     conn.commit()
     conn.close()
 
-def log(amount, category, message=''):
+def log(profile, amount, category, message=''):
     '''
     logs the expenditure in the database.
+    profile: e.g Work profile or Home profile
     amount: number
     category: string
     message: (optional) string
     '''
     date = str(datetime.now())
-    data = (amount, category, message, date)
+    data = (profile, amount, category, message, date)
     conn = sqlite3.connect('spent.db')
     c = conn.cursor()
-    sql = 'INSERT INTO expenses VALUES (?, ?, ?, ?)'
+    sql = 'INSERT INTO expenses VALUES (?, ?, ?, ?, ?)'
     c.execute(sql, data)
     conn.commit()
     conn.close()
 
-def view(category=None):
+def view(category = None, profile = None):
     '''
     Returns a list of all expenditure incurred, and the total expense.
     If a category is specified, it only returns info from that
@@ -51,6 +53,23 @@ def view(category=None):
         sql2 = '''
         SELECT sum(amount) FROM expenses WHERE category = '{}'
         '''.format(category)
+
+    if profile:
+        sql = '''
+        SELECT * FROM expenses WHERE profile = '{}'
+        '''.format(profile)
+        sql2 = '''
+        SELECT sum(amount) FROM expenses WHERE profile = '{}'
+        '''.format(profile)
+
+    if category and profile:
+        sql = '''
+        SELECT * FROM expenses WHERE profile = '{}' AND category = '{}'
+        '''.format(profile, category)
+        sql2 = '''
+        SELECT sum(amount) FROM expenses WHERE profile = '{}' AND category = '{}'
+        '''.format(profile, category)
+
     else:
         sql = '''
         SELECT * FROM expenses
